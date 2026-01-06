@@ -1,0 +1,102 @@
+# ----------------------------------------------------------------------------
+# Copyright (C) 2021-2023 Deepchecks (https://www.deepchecks.com)
+#
+# This file is part of Deepchecks.
+# Deepchecks is distributed under the terms of the GNU Affero General
+# Public License (version 3 or later).
+# You should have received a copy of the GNU Affero General Public License
+# along with Deepchecks.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------------
+#
+name: Code Style
+
+# CINTENT >> MANUAL TRIGGER
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request: 
+#     branches: [ main, nlp-base]
+on: [repository_dispatch, workflow_dispatch]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DISABLE_DEEPCHECKS_ANONYMOUS_TELEMETRY: "true"
+
+jobs:
+  pylint:
+    # CINTENT >> CHANGE_VERSION
+    # runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # CINTENT >> INSERT_CINTENT
+    - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        # CINTENT >> CHANGE_VERSION
+        # python-version: 3.9
+        python-version: "3.10"
+
+    - name: Run Pylint
+      run: make pylint
+
+    - name: Check import order
+      uses: jamescurtin/isort-action@master
+      with:
+        sortPaths: deepchecks/
+
+    # CINTENT >> INSERT_CINTENT
+    - name: Upload CIntent Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ env.CINTENT_ARTIFACT_NAME }}
+        path: ${{ env.CINTENT_LOGS }}
+
+  docstring:
+    # CINTENT >> CHANGE_VERSION
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # CINTENT >> INSERT_CINTENT
+    - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        # CINTENT >> CHANGE_VERSION
+        # python-version: 3.9
+        python-version: "3.10"
+
+    - name: Run Pydocstyle
+      run: make docstring
+
+    # CINTENT >> INSERT_CINTENT
+    - name: Upload CIntent Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ env.CINTENT_ARTIFACT_NAME }}
+        path: ${{ env.CINTENT_LOGS }}
+
+  # license-check:
+  #   runs-on: ubuntu-22.04
+    
+  #   needs: docstring
+    
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Set up Python 3.9
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: 3.9
+  #   - name: Run License eye
+  #     run: make license-check
